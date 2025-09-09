@@ -274,7 +274,8 @@ def plot_cutline_fits(V, x, y, z, x0=0.0, y0=0.0, z0=0.0, tol=1e-6, unit='um'):
     return coeffs
     
 def eval_spherical_harmonics(C, x, y, z):
-    jl.seval(f'C = {list(C)}')
+    C2 = jl.Array(C) #[float(c) for c in C]
+    jl.seval(f"C = {C2}")
     jl.seval("c = SphericalHarmonicCoefficients(C)")
     jl.seval("@polyvar x y z")
     jl.seval("f = sphericalHarmonicsExpansion(c, x, y, z)")
