@@ -75,22 +75,15 @@ print("\n=== Full Mj coefficients (no truncation) ===")
 with _pd.option_context('display.max_columns', None, 'display.width', 2000):
     print(Mj_df.to_string(index=False, float_format=lambda x: f"{x:.6e}"))
 
-# 2) Save to files
-Mj_df.to_csv("Mj_values.csv", index=False, float_format="%.6e")
-try:
-    Mj_df.to_excel("Mj_values.xlsx", index=False)
-except Exception as e:
-    print(f"Note: couldn't write XLSX (install 'openpyxl' to enable). Details: {e}")
-Mj_df.to_json("Mj_values.json", orient="records", indent=2)
-
-# 3) Export as a Python vector named C (same column order)
+# Export as a Python vector named C (same column order)
 C = Mj_df.iloc[0].tolist()
-with open("Mj_vector.py", "w") as f:
+result_dir = os.path.join(script_dir, 'result')
+os.makedirs(result_dir, exist_ok=True)
+result_file = os.path.join(result_dir, "Mj_vector.py")
+with open(result_file, "w") as f:
     f.write("C = [" + ", ".join(f"{v:.6e}" for v in C) + "]\n")
-# Also a plain text version (comma-separated)
-_np.savetxt("Mj_vector.txt", C, fmt="%.6e", delimiter=",")
 
-print(f"Saved: Mj_values.csv, Mj_values.json, Mj_vector.py, Mj_vector.txt (N={len(C)})")
+print(f"Saved: {result_file} (N={len(C)})")
 
 trap.plot_V_fit()
 
