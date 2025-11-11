@@ -1,0 +1,5 @@
+{
+    "python.defaultInterpreterPath": "/opt/anaconda3/envs/trap/bin/python",
+    "python.terminal.activateEnvironment": true
+}
+

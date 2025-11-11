@@ -1,11 +1,14 @@
 import matplotlib
 matplotlib.use('TkAgg')  # Use TkAgg backend for better compatibility
+import os
 from anharm_analysis.utils import big_plt_font
 from anharm_analysis.Trap import COMSOLTrap
 
 big_plt_font() # a specific set of plotting parameters for big font sizes and line width
 
-file = 'Data from comsol/b=2.52a-range(-50,1,50).csv'
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+file = os.path.join(script_dir, 'Data from comsol/b=2.52a-range(-50,1,50).csv')
 
 # A list of electrode names. In COMSOL simulation a parametric sweep
 # should be done with voltages of electrodes ei named as Vei.
