@@ -32,8 +32,9 @@ class SimulatedTrap:
 
     def construct_V_total(self, C=0, Ey=0, Ez=0, Ex=0, 
                           U3=0, U4=0, U2=-1, U5=0, U1=0, **kwargs): 
-        V_DC = self.get_electrode_voltages(C=C, Ey=Ey, Ez=Ez, Ex=Ex, 
-                                           U3=U3, U4=U4, U2=U2, U5=U5, U1=U1, **kwargs)
+        # V_DC = self.get_electrode_voltages(C=C, Ey=Ey, Ez=Ez, Ex=Ex,
+        #                                    U3=U3, U4=U4, U2=U2, U5=U5, U1=U1, **kwargs)
+        V_DC = [1.0]
         V_total = np.dot(self.V_matrix_ROI, V_DC) 
         self.V_DC = V_DC
         self.V_total = V_total 
@@ -75,31 +76,31 @@ class SimulatedTrap:
         fig, ax = plt.subplots() 
         A = np.linspace(Amin, Amax, 1000)
         a_x = compute_a(self.cutline_fit_coeff['x'])
-        a_y = compute_a(self.cutline_fit_coeff['y']) 
+        a_y = compute_a(self.cutline_fit_coeff['y'])
         a_z = compute_a(self.cutline_fit_coeff['z'])
         x_shift = find_freq_shift(A, a_x)
         y_shift = find_freq_shift(A, a_y)
         z_shift = find_freq_shift(A, a_z)
-        ax.plot(A, x_shift, label='x') 
-        ax.plot(A, y_shift, label='y') 
-        ax.plot(A, z_shift, label='z') 
+        ax.plot(A, x_shift, label='x')
+        ax.plot(A, y_shift, label='y')
+        ax.plot(A, z_shift, label='z')
         ax.set_xlabel(f'Amplitude ({self.unit})')
         ax.set_ylabel(r'$|\Delta \omega / \omega|$')
-        ax.grid() 
+        ax.grid()
         ax.set_yscale('log')
-        if logx: 
+        if logx:
             ax.set_xscale('log')
         ax.legend()
         plt.tight_layout()
         plt.show()
 
-class COMSOLTrap(SimulatedTrap): 
-    def __init__(self, result_file, electrodes, unit='um', L_ROI=50, skiprows=8, **kwargs): 
+class COMSOLTrap(SimulatedTrap):
+    def __init__(self, result_file, electrodes, unit='um', L_ROI=50, skiprows=8, **kwargs):
         super().__init__(result_file, electrodes, unit, L_ROI)
         self.sim_grid = COMSOLGrid(pd.read_csv(result_file, skiprows=skiprows), **kwargs)  # Grid used in COMSOL simulation
-        self.sim_grid.scale_xyz(self.r0) 
-        self.ROI_grid = self.sim_grid.gen_subcube(L_cube=L_ROI) 
-        for ei in electrodes: 
-            self.electrodes[ei] = COMSOLElectrode(ei, result_file, **kwargs) 
+        self.sim_grid.scale_xyz(self.r0)
+        self.ROI_grid = self.sim_grid.gen_subcube(L_cube=L_ROI)
+        for ei in electrodes:
+            self.electrodes[ei] = COMSOLElectrode(ei, result_file, **kwargs)
             self.electrodes[ei].set_sim_grid(self.sim_grid)
-        self.V_matrix_ROI = self.get_V_matrix_ROI() 
+        self.V_matrix_ROI = self.get_V_matrix_ROI()

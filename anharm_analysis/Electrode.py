@@ -49,7 +49,7 @@ class COMSOLElectrode(SimulatedElectrode):
         Ey_headers = [i for i in all_headers if f'{sim_prefix}Ey' in i] 
         Ez_headers = [i for i in all_headers if f'{sim_prefix}Ez' in i] 
         assert len(V_headers)==1, "Check output results or output headers, found 0 or 1+ potential data"
-        V = np.array(df[V_headers[0]]) 
+        V = np.array(df[V_headers[0]])
         Ex = np.array([]) if len(Ex_headers) != 1 else np.array(df[Ex_headers[0]]) 
         Ey = np.array([]) if len(Ey_headers) != 1 else np.array(df[Ey_headers[0]]) 
         Ez = np.array([]) if len(Ez_headers) != 1 else np.array(df[Ez_headers[0]]) 

@@ -5,10 +5,10 @@ from juliacall import Main as jl
 from scipy.interpolate import griddata
 import os 
 
-if not os.path.exists("../.setup_log"): 
+if not os.path.exists("../../.setup_log"):
     jl.seval("using Pkg")
     jl.Pkg.add("SphericalHarmonicExpansions")
-    os.mkdir("../.setup_log")
+    os.mkdir("../../.setup_log")
     
 jl.seval("using SphericalHarmonicExpansions") 
 
@@ -224,9 +224,9 @@ def plot_cutline_fits(V, x, y, z, x0=0.0, y0=0.0, z0=0.0, tol=1e-6, unit='um'):
         dict: Dictionary containing 8th-order polynomial coefficients for each direction.
     """
     directions = {
-        'x': (x, np.where((np.abs(y - y0) < tol) & (np.abs(z - z0) < tol)), x0, f'x ({unit})'),
-        'y': (y, np.where((np.abs(x - x0) < tol) & (np.abs(z - z0) < tol)), y0, f'y ({unit})'),
-        'z': (z, np.where((np.abs(x - x0) < tol) & (np.abs(y - y0) < tol)), z0, f'z ({unit})'),
+        'x': (x, np.where(np.isclose(y, y0) & np.isclose(z, z0)), x0, f'x ({unit})'),
+        'y': (y, np.where(np.isclose(x, x0) & np.isclose(z, z0)), y0, f'y ({unit})'),
+        'z': (z, np.where(np.isclose(x, x0) & np.isclose(y, y0)), z0, f'z ({unit})'),
     }
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
@@ -249,18 +249,12 @@ def plot_cutline_fits(V, x, y, z, x0=0.0, y0=0.0, z0=0.0, tol=1e-6, unit='um'):
         ax.plot(coord_cut, V_cut, 'o', label='Data')
         coord_plot = np.linspace(min(coord_cut), max(coord_cut), 1000)
 
-        # Fit quadratic
-        p2 = np.polynomial.polynomial.Polynomial.fit(coord_cut, V_cut, 2)
-        V_fit2 = p2(coord_plot)   #p.polyval(p2, coord_cut)
-        ax.plot(coord_plot, V_fit2, 'r--', label='Quadratic Fit')
-
         # Fit 8th-order polynomial
-        p8 = np.polynomial.polynomial.Polynomial.fit(coord_cut, V_cut, 8)
+        p8 = np.polynomial.polynomial.Polynomial.fit(coord_cut, V_cut, 3)
         V_fit8 = p8(coord_plot) #np.polyval(p8, coord_cut)
-        ax.plot(coord_plot, V_fit8, 'k-', label='8th-Order Fit')
+        ax.plot(coord_plot, V_fit8, 'k-', label='3th-Order Fit')
 
         coeffs[label] = p8.convert().coef
-        coeffs[f'{label}2'] = p2.convert().coef
 
         ax.set_title(f'Cutline along {label}-axis through trap center')
         ax.set_xlabel(coord_label)
@@ -272,7 +266,7 @@ def plot_cutline_fits(V, x, y, z, x0=0.0, y0=0.0, z0=0.0, tol=1e-6, unit='um'):
     plt.show()
     
     return coeffs
-    
+
 def eval_spherical_harmonics(C, x, y, z):
     C2 = jl.Array(C) #[float(c) for c in C]
     jl.seval(f"C = {C2}")
@@ -280,37 +274,38 @@ def eval_spherical_harmonics(C, x, y, z):
     jl.seval("@polyvar x y z")
     jl.seval("f = sphericalHarmonicsExpansion(c, x, y, z)")
     fastf = jl.seval("(x,y,z) -> fastfunc(f)([x,y,z])")
-    result = jl.broadcast(fastf, x, y, z) 
+    result = jl.broadcast(fastf, x, y, z)
     return np.array(result)
 
-def eval_spherical_harmonics_by_term(x, y, z, order=2): 
-    N = (order+1)**2 
+def eval_spherical_harmonics_by_term(x, y, z, order=2):
+    N = (order+1)**2
     V_list = []
-    for i in range(N): 
-        C = np.zeros(N) 
+    for i in range(N):
+        C = np.zeros(N)
         C[i] = 1
-        V_list.append(eval_spherical_harmonics(C, x, y, z)) 
+        V_list.append(eval_spherical_harmonics(C, x, y, z))
     return np.array(V_list).T
-    
+
 def get_Cj_list(C=0, Ey=0, Ez=0, Ex=0, U3=0, U4=0, U2=-1, U5=0, U1=0, **kwargs):
     multipole_coeffs = [C, Ey, Ez, Ex, U3, U4, U2, U5, U1]
     L = 2
-    for mj in kwargs: 
-        term = int(mj[1:])  
-        while (L+1)**2 < term: 
-            L += 1 
-    
-    N_terms = (L+1)**2 
+    for mj in kwargs:
+        term = int(mj[1:])
+        while (L+1)**2 < term:
+            L += 1
+
+    N_terms = (L+1)**2
     C = np.zeros(N_terms)
-    for i in range(N_terms): 
-        if i < 9: 
-            C[i] = multipole_coeffs[i] 
-        elif f'm{i}' in kwargs: 
-            C[i] = kwargs[f'm{i}'] 
+    for i in range(N_terms):
+        if i < 9:
+            C[i] = multipole_coeffs[i]
+        elif f'm{i}' in kwargs:
+            C[i] = kwargs[f'm{i}']
     return C
 
-def get_Cj_fit(V, x, y, z, order=2): 
-    V_spherical_harmonics_matrix = eval_spherical_harmonics_by_term(x, y, z, order=order) 
+def get_Cj_fit(V, x, y, z, order=2):
+    #xtc=x-0.00640772677003161
+    V_spherical_harmonics_matrix = eval_spherical_harmonics_by_term(x, y, z, order=order)
     return np.linalg.lstsq(V_spherical_harmonics_matrix, V, rcond=None)[0]
 
 def get_r0_from_unit(unit): 
