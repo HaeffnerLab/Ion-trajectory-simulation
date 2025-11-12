@@ -16,9 +16,13 @@ class SimulatedTrap:
         self.unit = unit
 
     def get_V_matrix_ROI(self): 
+        # Get potential values at the specific points in ROI_grid (not a cube around center)
+        x, y, z = self.ROI_grid.get_xyz_array()
+        # Use stored indices if available for efficiency
+        indices = getattr(self.ROI_grid, 'indices', None)
         V = [] 
         for ei in self.electrodes: 
-            V.append(self.electrodes[ei].get_V_in_cube(L_cube=self.ROI_grid.L_cube)) 
+            V.append(self.electrodes[ei].get_V_at_points(x, y, z, indices=indices)) 
         return np.array(V).T
 
     def get_electrode_voltages(self, C=0, Ey=0, Ez=0, Ex=0, 

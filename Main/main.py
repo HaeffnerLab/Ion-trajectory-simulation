@@ -8,7 +8,7 @@ big_plt_font() # a specific set of plotting parameters for big font sizes and li
 
 # Get the directory where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
-file = os.path.join(script_dir, 'Data from comsol/b=2.52a-range(-50,1,50).csv')
+file = os.path.join(script_dir, 'Data from comsol/b=2.52a-range(-10,1,30).csv')
 
 # A list of electrode names. In COMSOL simulation a parametric sweep
 # should be done with voltages of electrodes ei named as Vei.

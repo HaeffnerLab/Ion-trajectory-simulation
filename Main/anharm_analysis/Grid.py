@@ -68,17 +68,30 @@ class COMSOLGrid(Grid):
         return Grid(x, y, z)
 
     def gen_subcube(self, L_cube): 
-        x0, y0, z0 = self.get_grid_center() 
-        x, y, z, _ = self.get_subgrid_xyzi(x0-L_cube/2, x0+L_cube/2, 
-                                           y0-L_cube/2, y0+L_cube/2, 
-                                           z0-L_cube/2, z0+L_cube/2)
-        return CubeGrid(x, y, z, L_cube)
+        # Generate region based on data range instead of trap center
+        x_min, x_max = np.min(self.x), np.max(self.x)
+        y_min, y_max = np.min(self.y), np.max(self.y)
+        z_min, z_max = np.min(self.z), np.max(self.z)
+        
+        # Use the actual data range boundaries and store indices for efficient lookup
+        x, y, z, indices_tuple = self.get_subgrid_xyzi(x_min, x_max, y_min, y_max, z_min, z_max)
+        # Extract array from tuple returned by np.where
+        indices = indices_tuple[0] if isinstance(indices_tuple, tuple) else indices_tuple
+        
+        # Calculate the maximum dimension for L_cube
+        x_range = x_max - x_min
+        y_range = y_max - y_min
+        z_range = z_max - z_min
+        L_cube = max(x_range, y_range, z_range)
+        
+        return CubeGrid(x, y, z, L_cube, indices=indices)
             
 
 class CubeGrid(Grid): 
-    def __init__(self, x, y, z, L_cube): 
+    def __init__(self, x, y, z, L_cube, indices=None): 
         super().__init__(x, y, z) 
         self.L_cube = L_cube
+        self.indices = indices  # Store indices from parent grid for efficient lookup
     
 class CustomizedGrid(Grid): 
     def __init__(self, xmin, xmax, xstep, ymin, ymax, ystep, zmin, zmax, zstep): 
